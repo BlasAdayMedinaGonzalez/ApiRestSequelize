@@ -1,11 +1,12 @@
 import {User} from "../models/User"
+const bcrypt = require("bcryptjs")
 
 const getUsers = async(req, res) => {
     try {
         const results = await User.findAll();
 
         let message = "";
-        if (results === undefined || results.length === 0) {
+        if (!results || results.length === 0) {
             message = "users table is empty";
         } else {
             message = "Successfully retrieved all users";
@@ -21,12 +22,20 @@ const getUsers = async(req, res) => {
 
 const addUser = async(req, res) => {
     const {name, email, password} = req.body;
-    if (name === undefined || email === undefined || password === undefined) {
-        res.status(400).json({message: "Bad request. Please fill all fields."});
+
+    if (!name || !email || !password) {
+        return res.status(400).json({message: "Bad request. Please fill all fields."});
+    }
+
+    const ifUserFound = await User.findOne({where: {name}})
+    if (ifUserFound != null) {
+        return res.status(400).json({message: "User was already registered"});
     }
 
     try {
-        const user = {name, email, password}
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = {name, email, password: hashedPassword}
         const result = await User.create(user);
 
         res.json({message: "User added ", data: result});
@@ -39,15 +48,15 @@ const addUser = async(req, res) => {
 const getUserbyName = async(req, res) => {
     const {name} = req.params;
 
-    if (name === undefined ) {
-        res.status(400).json({message: "Bad request. Please fill all fields."});
+    if (!name) {
+        return res.status(400).json({message: "Bad request. Please fill all fields."});
     }
 
     try {
         const result = await User.findOne({where: {name}});
         
         let message = "";
-        if (result === undefined || result === null) {
+        if (!result || result === null) {
             message = "User is not found";
         } else {
             message = "Sucessfully retrieved user data";
@@ -61,42 +70,18 @@ const getUserbyName = async(req, res) => {
     
 }
 
-const getUserbyPassword = async(req, res) => {
-    const {password} = req.params;
-    
-    if (password === undefined ) {
-        res.status(400).json({message: "Bad request. Please fill all fields."});
-    }
-
-    try {
-        const result = await User.findOne({where: {password}});
-        
-        let message = "";
-        if (result === undefined || result === null) {
-            message = "User is not found";
-        } else {
-            message = "Sucessfully retrieved user data";
-        }
-
-        res.json({message, data: result});
-    } catch (err) {
-        res.status(500)
-        res.send(err.message);
-    }
-    
-}
 
 const deleteUserbyId = async(req, res) => {
     const {id} = req.params;
-    if (id === undefined) {
-        res.status(400).json({message: "Bad request. Please fill all fields."});
+    if (!id) {
+        return res.status(400).json({message: "Bad request. Please fill all fields."});
     }
 
     try {
         const result = await User.destroy({where: {id}});
         
         let message = "";
-        if (result === undefined || result.length === 0) {
+        if (!result || result.length === 0) {
             message = "User is not found";
         } else {
             message = "Sucessfully user data deleted";
@@ -114,8 +99,8 @@ const updateUserbyId = async(req, res) => {
     const {id} = req.params;
     const {name, email, password} = req.body;
 
-    if (id === undefined || name === undefined || email === undefined || password === undefined) {
-        res.status(400).json({message: "Bad request. Please fill all fields."});
+    if (!id || !name || !email || !password) {
+        return res.status(400).json({message: "Bad request. Please fill all fields."});
     }
 
     try {
@@ -124,7 +109,7 @@ const updateUserbyId = async(req, res) => {
         const userUpdated = await User.upsert(newData);
         
         let message = "";
-        if (userUpdated === undefined || userUpdated.length === 0) {
+        if (!userUpdated || userUpdated.length === 0) {
             message = "User is not found";
         } else {
             message = "Sucessfully user data updated";
@@ -142,7 +127,6 @@ export const userController = {
     getUsers,
     addUser,
     getUserbyName,
-    getUserbyPassword,
     deleteUserbyId,
     updateUserbyId
 }
