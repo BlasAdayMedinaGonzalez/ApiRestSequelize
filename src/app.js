@@ -4,6 +4,7 @@ const cors = require('cors');
 
 //Routes import
 import userRoutes from "./routes/user.routes";
+import taskRoutes from "./routes/task.routers";
 
 
 const app = express();
@@ -21,6 +22,7 @@ app.use(morgan("dev"));
 
 //Routes 
 app.use("/api/users", userRoutes);
+app.use("/api/tasks", taskRoutes);
 
 
 export default app;
