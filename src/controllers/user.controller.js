@@ -70,6 +70,31 @@ const getUserbyName = async(req, res) => {
     
 }
 
+const getUserbyId = async(req, res) => {
+    const {id} = req.params;
+
+    if (!id) {
+        return res.status(400).json({message: "Bad request. Please fill all fields."});
+    }
+
+    try {
+        const result = await User.findOne({where: {id}});
+        
+        let message = "";
+        if (!result || result === null) {
+            message = "User is not found";
+        } else {
+            message = "Sucessfully retrieved user data";
+        }
+
+        res.json({message, data: result});
+    } catch (err) {
+        res.status(500)
+        res.send(err.message);
+    }
+    
+}
+
 
 const deleteUserbyId = async(req, res) => {
     const {id} = req.params;
@@ -127,6 +152,7 @@ export const userController = {
     getUsers,
     addUser,
     getUserbyName,
+    getUserbyId,
     deleteUserbyId,
     updateUserbyId
 }
