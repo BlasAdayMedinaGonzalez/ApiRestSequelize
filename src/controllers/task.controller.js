@@ -25,7 +25,7 @@ const addTaskByUser = async(req,res) => {
     const {user_id} = req.params;
     const {tittle, description, done} = req.body;
 
-    if (!user_id || !tittle || !description) {
+    if (!tittle || !description) {
         return res.status(400).json({message: "Bad request. Please fill all fields."});
     }
     
@@ -45,16 +45,26 @@ const updateTaskByUser = async(req,res) => {
     const {task_id} = req.params;
     const {tittle, description, done} = req.body;
 
-    if (!task_id || !tittle || !description) {
+    if (!tittle || !description) {
         return res.status(400).json({message: "Bad request. Please fill all fields."});
     }
     
     try {
 
-        const taskUpdated = {task_id, tittle, description, done}
-        const results = await Task.upsert(taskUpdated);
+        const newtaskUpda = {tittle, description, done}
+        const task = await Task.findOne({ where: {task_id} });
 
-        res.json({message: "Task Updated", data: results});
+        let message;
+        if (task) {
+            task.tittle = newtaskUpda.tittle;
+            task.description = newtaskUpda.description;
+            await task.save();
+            message = "Sucessfully task data updated";
+        } else {
+            message = "task not found";
+        }
+
+        res.json({message, data: task});
     } catch (err) {
         res.status(500)
         res.send(err.message);
