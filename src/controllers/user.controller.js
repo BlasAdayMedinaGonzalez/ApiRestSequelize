@@ -122,25 +122,27 @@ const deleteUserbyId = async(req, res) => {
 
 const updateUserbyId = async(req, res) => {
     const {id} = req.params;
-    const {name, email, password} = req.body;
+    const {name, email} = req.body;
 
-    if (!id || !name || !email || !password) {
+    if (!name || !email) {
         return res.status(400).json({message: "Bad request. Please fill all fields."});
     }
 
     try {
-        const newData = {id,name, email, password}
+        const newData = {id, name, email}
+        const user = await User.findOne({ where: {id} });
 
-        const userUpdated = await User.upsert(newData);
-        
-        let message = "";
-        if (!userUpdated || userUpdated.length === 0) {
-            message = "User is not found";
-        } else {
+        let message;
+        if (user) {
+            user.name = newData.name;
+            user.email = newData.email;
+            await user.save();
             message = "Sucessfully user data updated";
+        } else {
+            message = "User is not found";
         }
 
-        res.json({message, data: userUpdated});
+        res.json({message, data: user});
     } catch (err) {
         res.status(500)
         res.send(err.message);
